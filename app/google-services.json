@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "15248461641",
+    "project_id": "nayarasta-5a87c",
+    "storage_bucket": "nayarasta-5a87c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:15248461641:android:a83a6169d03a10d8149498",
+        "android_client_info": {
+          "package_name": "com.ahcreates.nayarasta"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKI02jyvc5RkYw_5xlKZgFH26qo2CtJT4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:15248461641:android:2b7ae63c61e4838c149498",
+        "android_client_info": {
+          "package_name": "com.example"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKI02jyvc5RkYw_5xlKZgFH26qo2CtJT4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

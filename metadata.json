@@ -1,0 +1,6 @@
+{
+  "name": "NayaRasta",
+  "description": "NayaRasta - An expert test preparation, community discussion, and academic collaborative learning notes application with active group chats, admin verification flows, and robust analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
