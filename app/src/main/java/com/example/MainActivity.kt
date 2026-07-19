@@ -40,6 +40,16 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.DARK -> true
             }
 
+            // Keep status/nav bar icon contrast in sync with the resolved app
+            // theme (not just the system setting), since a user can force
+            // Light/Dark independently of the device's own night mode.
+            androidx.compose.runtime.LaunchedEffect(useDarkTheme) {
+                androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = !useDarkTheme
+                    isAppearanceLightNavigationBars = !useDarkTheme
+                }
+            }
+
             // Dynamically allow screenshots only for admins or user 'saqi'
             val loggedInUser by viewModel.loggedInUser.collectAsState()
             androidx.compose.runtime.LaunchedEffect(loggedInUser) {
@@ -76,6 +86,7 @@ class MainActivity : ComponentActivity() {
             } else null
 
             MyApplicationTheme(
+                darkTheme = useDarkTheme,
                 primaryColor = primaryColor,
                 secondaryColor = secondaryColor
             ) {
