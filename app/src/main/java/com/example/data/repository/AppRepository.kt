@@ -132,8 +132,11 @@ class AppRepository(private val appDao: AppDao) {
         appDao.updateUser(user)
         try {
             com.example.data.network.SupabaseClient.api.updateUser("eq.${user.id}", user)
+            lastUserSyncError = null
         } catch (e: Exception) {
             e.printStackTrace()
+            lastUserSyncError = describeRemoteError(e)
+            android.util.Log.e("updateUser", "Failed to update user on remote Supabase: ${e.message}", e)
         }
     }
     suspend fun deleteUser(user: User) = withContext(Dispatchers.IO) {

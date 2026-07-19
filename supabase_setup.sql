@@ -16,6 +16,41 @@
 -- =============================================================================
 
 
+-- 0) USERS TABLE COLUMNS  — add every column the app writes, if missing.
+--    Symptom this fixes:
+--      PGRST204 "Could not find the '<col>' column of 'users' in the schema cache"
+--    which blocks registration (INSERT) and profile updates (UPDATE, incl. the
+--    profile image). These map 1:1 to the app's User model. `if not exists`
+--    makes this safe to re-run and leaves existing columns untouched.
+--    (Timestamps are stored by the app as epoch milliseconds -> bigint.)
+-- -----------------------------------------------------------------------------
+alter table public.users add column if not exists username               text;
+alter table public.users add column if not exists password_hash          text;
+alter table public.users add column if not exists role                   text;
+alter table public.users add column if not exists full_name              text;
+alter table public.users add column if not exists email                  text;
+alter table public.users add column if not exists grade_level            text;
+alter table public.users add column if not exists study_goal             text;
+alter table public.users add column if not exists avatar_color           integer;
+alter table public.users add column if not exists phone_number           text;
+alter table public.users add column if not exists student_type           text;
+alter table public.users add column if not exists profile_image_uri      text;
+alter table public.users add column if not exists current_streak         integer;
+alter table public.users add column if not exists longest_streak         integer;
+alter table public.users add column if not exists last_active_timestamp  bigint;
+alter table public.users add column if not exists created_at             bigint;
+alter table public.users add column if not exists is_paid                boolean;
+alter table public.users add column if not exists approved_mcqs          integer;
+alter table public.users add column if not exists rejected_mcqs          integer;
+alter table public.users add column if not exists subscription_type      text;
+alter table public.users add column if not exists subscription_start_at  bigint;
+alter table public.users add column if not exists subscription_expires_at bigint;
+alter table public.users add column if not exists updated_at             bigint;
+
+-- Refresh PostgREST's schema cache so the new columns are recognized immediately.
+notify pgrst, 'reload schema';
+
+
 -- 1) USERS TABLE  — registration (INSERT), login (SELECT), profile edits (UPDATE)
 -- -----------------------------------------------------------------------------
 alter table public.users enable row level security;
