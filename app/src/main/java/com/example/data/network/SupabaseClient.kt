@@ -743,6 +743,12 @@ object SupabaseClient {
         }
     }
 
+    // Captures the most recent Storage upload error so the UI can explain why an
+    // image did not upload (e.g. missing bucket or a policy blocking the anon
+    // role) instead of silently spinning. Null means the last upload succeeded.
+    @Volatile
+    var lastStorageError: String? = null
+
     suspend fun uploadFile(bucketName: String, filePath: String, bytes: ByteArray, mimeType: String): String? {
         return withContext(Dispatchers.IO) {
             try {
@@ -770,9 +776,21 @@ object SupabaseClient {
                 } else {
                     if (rawUrl.endsWith("/")) rawUrl.substring(0, rawUrl.length - 1) else rawUrl
                 }
+                lastStorageError = null
                 "$cleanUrl/storage/v1/object/public/$bucketName/$filePath"
             } catch (e: Exception) {
                 e.printStackTrace()
+                lastStorageError = when (e) {
+                    is retrofit2.HttpException -> {
+                        val body = try {
+                            e.response()?.errorBody()?.string()
+                        } catch (_: Exception) {
+                            null
+                        }
+                        "HTTP ${e.code()}: ${(body?.takeIf { it.isNotBlank() } ?: e.message())?.take(300)}"
+                    }
+                    else -> e.message ?: e.toString()
+                }
                 null
             }
         }

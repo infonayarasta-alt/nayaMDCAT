@@ -77,6 +77,30 @@ class AppRepository(private val appDao: AppDao) {
     suspend fun getAllUsersList(): List<User> = withContext(Dispatchers.IO) {
         appDao.getAllUsersList()
     }
+    // Captures the most recent remote-write error for user sync so the UI can
+    // tell the user *why* a registration did not reach Supabase, instead of
+    // silently reporting success. Null means the last insert synced cleanly.
+    @Volatile
+    var lastUserSyncError: String? = null
+
+    // Turns a network/Retrofit failure into a short, human-readable reason
+    // (including the HTTP status and PostgREST error body when present).
+    private fun describeRemoteError(e: Throwable): String {
+        return when (e) {
+            is retrofit2.HttpException -> {
+                val body = try {
+                    e.response()?.errorBody()?.string()
+                } catch (_: Exception) {
+                    null
+                }
+                "HTTP ${e.code()}: ${(body?.takeIf { it.isNotBlank() } ?: e.message())?.take(300)}"
+            }
+            is java.net.UnknownHostException -> "Cannot reach server (no network / DNS)."
+            is java.net.SocketTimeoutException -> "Server timed out."
+            else -> e.message ?: e.toString()
+        }
+    }
+
     suspend fun insertUser(user: User): Long = withContext(Dispatchers.IO) {
         val id = appDao.insertUser(user)
         try {
@@ -91,10 +115,15 @@ class AppRepository(private val appDao: AppDao) {
                 val tempUser = user.copy(id = id.toInt())
                 appDao.deleteUser(tempUser)
                 appDao.insertUser(realRemoteUser)
+                lastUserSyncError = null
                 return@withContext realRemoteUser.id.toLong()
             }
+            // Request succeeded but no row came back — usually a permission/return
+            // configuration issue on the server side.
+            lastUserSyncError = "Server returned no row for the new user (check table INSERT permissions)."
         } catch (e: Exception) {
             e.printStackTrace()
+            lastUserSyncError = describeRemoteError(e)
             android.util.Log.e("insertUser", "Failed to insert user on remote Supabase: ${e.message}", e)
         }
         id

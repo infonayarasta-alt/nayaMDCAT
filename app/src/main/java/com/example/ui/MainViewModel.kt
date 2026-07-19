@@ -1426,8 +1426,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     android.util.Log.e("AuthModule", "Database failed to insert user: ${dbEx.message}", dbEx)
                     throw dbEx
                 }
-                feedbackMessage.value = "Registration successful! You may log in now."
-                onComplete(true)
+                val syncError = repository.lastUserSyncError
+                if (syncError != null) {
+                    // The account exists locally, but did NOT reach Supabase — tell
+                    // the user the real reason instead of falsely reporting success.
+                    feedbackMessage.value =
+                        "Account saved on this device, but it was NOT saved to the server: $syncError"
+                    onComplete(true)
+                } else {
+                    feedbackMessage.value = "Registration successful! You may log in now."
+                    onComplete(true)
+                }
             } catch (ex: Exception) {
                 android.util.Log.e("AuthModule", "Unhandled exception during registration: ${ex.message}", ex)
                 feedbackMessage.value = "Registration error: ${ex.localizedMessage ?: "Database query failed."}"
@@ -2953,9 +2962,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             // Upload directly to supabase
-            com.example.data.network.SupabaseClient.uploadFile("public-assets", "$folder/$fileName", processedBytes, if (type.contains("image")) "image/jpeg" else type)
+            val uploadedUrl = com.example.data.network.SupabaseClient.uploadFile("public-assets", "$folder/$fileName", processedBytes, if (type.contains("image")) "image/jpeg" else type)
+            if (uploadedUrl == null) {
+                // Make the failure visible instead of leaving the UI stuck on a spinner.
+                feedbackMessage.value = "Upload failed: ${com.example.data.network.SupabaseClient.lastStorageError ?: "unknown error"}"
+            }
+            uploadedUrl
         } catch (e: Exception) {
             e.printStackTrace()
+            feedbackMessage.value = "Upload failed: ${e.localizedMessage ?: "unknown error"}"
             null
         }
     }
